@@ -10,7 +10,7 @@ gvm 是一个使用 Go 编写的 Go 版本管理器，支持远程安装、版�
 
 安装与构建
 - 从源码构建：
-  - `go build -o gvm .`
+  - `go build -o gvm ./cmd/gvm`
   - 首次使用前执行：`./gvm init`
 - 通过 Release 安装：在 GitHub Releases 页面下载对应平台的压缩包，解压得到 `gvm` 可执行文件并加入 PATH。
 
