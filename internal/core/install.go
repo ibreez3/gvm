@@ -3,6 +3,9 @@ package core
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,72 +26,176 @@ func InstallVersion(version string) error {
 	}
 	vdir := filepath.Join(d, "go"+version)
 	if _, err := os.Stat(vdir); err == nil {
-		return nil
+		return fmt.Errorf("version %s already installed", version)
 	}
+
 	osys := runtime.GOOS
 	arch := runtime.GOARCH
-	url := fmt.Sprintf("https://go.dev/dl/go%s.%s-%s.tar.gz", version, osys, arch)
-	tarPath := filepath.Join(d, fmt.Sprintf("go%s.%s-%s.tar.gz", version, osys, arch))
+
+	// 1. 获取版本信息（URL 和 Checksum）
+	fmt.Printf("🔍 Searching for version %s ...\n", version)
+	fileInfo, err := getVersionInfo("go"+version, osys, arch)
+	if err != nil {
+		// Fallback: 如果 JSON 中找不到，尝试直接构造 URL（但不校验 checksum，或者给警告）
+		// 为了安全，这里我们先强制要求找到，或者打印警告
+		fmt.Printf("⚠️  Warning: Could not find version info in official JSON API: %v\n", err)
+		fmt.Println("⚠️  Proceeding with direct download (NO CHECKSUM VERIFICATION)")
+		// 构造默认 URL
+		fileInfo = &File{
+			Filename: fmt.Sprintf("go%s.%s-%s.tar.gz", version, osys, arch),
+			SHA256:   "", // Empty means no verification
+		}
+		// URL 需手动构造，因为 fileInfo 只有文件名
+	}
+
+	downloadURL := "https://go.dev/dl/" + fileInfo.Filename
+	tarPath := filepath.Join(d, fileInfo.Filename)
+
 	if err := os.MkdirAll(d, 0o755); err != nil {
 		return err
 	}
-	fmt.Println("🖕Install go", "go"+version)
-	fmt.Println("🌿Install from `" + url + "`")
-	fmt.Println("🚀Save to:", tarPath)
-	tmpf, err := os.OpenFile(tarPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
-	if err != nil {
+
+	fmt.Println("⬇️  Downloading go" + version + "...")
+	fmt.Println("🔗 Source:", downloadURL)
+	fmt.Println("📦 Dest:", tarPath)
+
+	// 2. 下载文件
+	if err := downloadFile(downloadURL, tarPath); err != nil {
 		return err
 	}
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("下载失败: %s", resp.Status)
-	}
-	cl := resp.ContentLength
-	start := time.Now()
-	var written int64
-	buf := make([]byte, 32*1024)
-	for {
-		n, rerr := resp.Body.Read(buf)
-		if n > 0 {
-			if _, werr := tmpf.Write(buf[:n]); werr != nil {
-				tmpf.Close()
-				return werr
-			}
-			written += int64(n)
-			printProgress(written, cl, start)
+
+	// 3. 校验 Checksum
+	if fileInfo.SHA256 != "" {
+		fmt.Println("🛡️  Verifying checksum...")
+		if err := verifyChecksum(tarPath, fileInfo.SHA256); err != nil {
+			os.Remove(tarPath) // 删除损坏的文件
+			return fmt.Errorf("checksum verification failed: %v", err)
 		}
-		if rerr == io.EOF {
-			break
-		}
-		if rerr != nil {
-			tmpf.Close()
-			return rerr
-		}
+		fmt.Println("✅ Checksum verified")
+	} else {
+		fmt.Println("⚠️  Skipping checksum verification (not available)")
 	}
-	fmt.Println()
-	if err := tmpf.Close(); err != nil {
-		return err
-	}
+
+	// 4. 解压安装
+	fmt.Println("📦 Extracting...")
 	tdir, err := os.MkdirTemp("", "go-tgz-untar-*")
 	if err != nil {
 		return err
 	}
 	defer os.RemoveAll(tdir)
+
 	if err := untar(tarPath, tdir); err != nil {
 		return err
 	}
+
 	src := filepath.Join(tdir, "go")
 	if _, err := os.Stat(src); err != nil {
-		return fmt.Errorf("包结构错误")
+		return fmt.Errorf("package structure error: 'go' directory not found")
 	}
+
 	if err := os.Rename(src, vdir); err != nil {
 		return err
 	}
+
 	_ = os.Remove(tarPath)
+	fmt.Printf("🎉 Successfully installed go%s\n", version)
+	return nil
+}
+
+func getVersionInfo(version, osys, arch string) (*File, error) {
+	// 查询包含所有版本的 JSON
+	resp, err := http.Get("https://go.dev/dl/?mode=json&include=all")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("failed to fetch versions: %s", resp.Status)
+	}
+
+	var versions []DLVersion
+	if err := json.NewDecoder(resp.Body).Decode(&versions); err != nil {
+		return nil, err
+	}
+
+	for _, v := range versions {
+		if v.Version == version {
+			for _, f := range v.Files {
+				if f.OS == osys && f.Arch == arch && f.Kind == "archive" {
+					return &f, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("version not found in official list")
+}
+
+func downloadFile(url, dest string) error {
+	out, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("download failed: %s", resp.Status)
+	}
+
+	// Progress bar setup
+	cl := resp.ContentLength
+	start := time.Now()
+	var written int64
+	buf := make([]byte, 32*1024)
+
+	for {
+		nr, er := resp.Body.Read(buf)
+		if nr > 0 {
+			nw, ew := out.Write(buf[0:nr])
+			if nw > 0 {
+				written += int64(nw)
+			}
+			if ew != nil {
+				return ew
+			}
+			if nr != nw {
+				return io.ErrShortWrite
+			}
+			printProgress(written, cl, start)
+		}
+		if er != nil {
+			if er != io.EOF {
+				return er
+			}
+			break
+		}
+	}
+	fmt.Println()
+	return nil
+}
+
+func verifyChecksum(path, expected string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+
+	actual := hex.EncodeToString(h.Sum(nil))
+	if actual != expected {
+		return fmt.Errorf("expected %s, got %s", expected, actual)
+	}
 	return nil
 }
 
