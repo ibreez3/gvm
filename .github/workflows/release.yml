@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "v*"
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -17,6 +19,35 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Auto Tag on Merge
+        if: github.ref == 'refs/heads/main'
+        id: auto_tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 获取最新的 tag，如果不存在则从 v0.0.0 开始
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Latest tag: $latest_tag"
+          
+          # 解析版本号
+          version_raw=${latest_tag#v}
+          IFS='.' read -r major minor patch <<< "$version_raw"
+          major=${major:-0}
+          minor=${minor:-0}
+          patch=${patch:-0}
+          
+          # 默认增加 Patch 版本
+          next_version="v$major.$minor.$((patch + 1))"
+          echo "Next version: $next_version"
+          
+          # 打 Tag 并推送
+          git tag -a "$next_version" -m "Auto release $next_version"
+          git push origin "$next_version"
+          
+          # 设置输出，供后续步骤参考（虽然 goreleaser 会自动检测 tag，但明确一下也好）
+          echo "new_tag=$next_version" >> $GITHUB_OUTPUT
 
       - name: Set up Go
         uses: actions/setup-go@v5
