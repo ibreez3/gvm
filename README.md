@@ -1,60 +1,132 @@
-gvm 是一个使用 Go 编写的 Go 版本管理器，支持远程安装、版本切换、本地与远程列表、版本搜索，以及自动初始化 shell 环境。
+# GVM (Go Version Manager)
 
-特性
-- 安装指定版本：`gvm install <version>`（支持 `1.25.5` 或 `go1.25.5`）
-- 切换当前版本：`gvm use <version>`（建立 `~/.gvm/goroot` 软链指向 `~/.gvm/go<version>`）
-- 查看本地版本：`gvm list -l`
-- 查看远程版本：`gvm list -r -n 30`（默认返回最新 30 个稳定版，过滤 rc/beta）
-- 查看当前使用：`gvm current`
-- 搜索子版本：`gvm search 1.21`（返回 `1.21.x` 的所有稳定子版本）
+[![Build Status](https://github.com/ibreez3/gvm/actions/workflows/ci.yml/badge.svg)](https://github.com/ibreez3/gvm/actions)
+[![Release](https://img.shields.io/github/v/release/ibreez3/gvm.svg)](https://github.com/ibreez3/gvm/releases)
+[![License](https://img.shields.io/github/license/ibreez3/gvm.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ibreez3/gvm)](https://goreportcard.com/report/github.com/ibreez3/gvm)
 
-安装与构建
-- 从源码构建：
-  - `go build -o gvm ./cmd/gvm`
-  - 首次使用前执行：`./gvm init`
-- 通过 Release 安装：在 GitHub Releases 页面下载对应平台的压缩包，解压得到 `gvm` 可执行文件并加入 PATH。
+**GVM** 是一个轻量级、跨平台的 Go 语言版本管理器，使用 Go 编写。它旨在简化 Go 开发环境的搭建与多版本管理，支持一键安装、切换、搜索 Go 版本，并自动配置环境变量。
 
-用法示例
-- 初始化：`gvm init`
-- 安装并切换：
-  - `gvm install 1.24.5`
-  - `gvm use 1.24.5`
-- 列表：
-  - 本地：`gvm list -l`
-  - 远程：`gvm list -r -n 30`
-- 当前版本：`gvm current`
-- 搜索：`gvm search 1.21`
+---
 
-目录结构与环境
-- 安装目录：`$HOME/.gvm`，每个版本为一个目录：`~/.gvm/go<version>`
-- 当前版本：`~/.gvm/goroot -> ~/.gvm/go<version>`（软链接）
-- 环境文件：`~/.gvm/.gvmrc`，内容：
-  - `export GOROOT=$HOME/.gvm/goroot`
-  - `export PATH=$PATH:$GOROOT/bin`
-  - `export GOPATH=$HOME/go`
-  - `export GOBIN=$GOPATH/bin`
-  - `export GOPROXY=https://goproxy.cn,direct`
-- Shell 注入：自动检测 `~/.zshrc` 或 `~/.bashrc` 并追加：
-  - `# gvm shell setup`
-  - `if [ -f "$HOME/.gvm/.gvmrc" ]; then`
-  - `    source "$HOME/.gvm/.gvmrc"`
-  - `fi`
+## ✨ 特性 (Features)
 
-Release 工作流
-- 开发模式：
-  - 基于 `develop` 分支进行日常开发。
-  - 所有功能分支合并回 `develop`。
-  - `main` 分支仅接受来自 `develop` 的合并（受 GitHub Workflow 保护）。
-- 自动化发布：
-  - **自动模式**：当 `develop` 分支合并到 `main` 时，GitHub Workflow 会自动计算下一个 Patch 版本号（例如 `v1.0.1` -> `v1.0.2`），打 Tag 并发布 Release。无需人工干预。
-  - **手动模式**：如果需要发布 Minor 或 Major 版本，或在本地操作：
-    - 切换到 `main` 分支运行 `make release`：交互式脚本辅助你选择版本类型（Patch/Minor/Major），自动打 tag 并推送到 GitHub。
-  - 推送符合 `v*` 的 tag 将自动触发构建与发布（多平台：Linux、macOS、Windows；架构：amd64、arm64）。
-- 工作流使用 Go 官方环境与 GoReleaser 构建压缩包并上传到 GitHub Release。
-- 手动触发也支持：在 GitHub Actions 中选择 `Release` 工作流，点击 `Run workflow`。
+- 🚀 **快速安装**：支持从官方源 (`go.dev`) 快速下载并安装指定版本的 Go。
+- 🔄 **版本切换**：一键切换当前使用的 Go 版本（基于软链接机制）。
+- 📋 **版本管理**：查看本地已安装版本和远程可用版本。
+- 🔍 **智能搜索**：快速搜索可用的 Go 版本（支持模糊匹配）。
+- 🛠 **自动配置**：`gvm init` 自动检测 Shell (`zsh`/`bash`) 并注入环境变量，开箱即用。
+- 📦 **多平台支持**：支持 macOS, Linux 和 Windows (部分功能)。
 
-遥测与下载源
-- 远程版本列表与安装包源来自官方 `https://go.dev/dl`，安全且稳定。
+## 📦 安装 (Installation)
 
-致谢
-- Go 语言具有快速编译、并发原生支持与强大的标准库，适用于 CLI 工具与发布流程。
+### 方式一：通过 Release 安装（推荐）
+
+1. 前往 [Releases](https://github.com/ibreez3/gvm/releases) 页面下载对应系统的压缩包。
+2. 解压并赋予执行权限：
+   ```bash
+   tar -zxvf gvm_Darwin_arm64.tar.gz
+   chmod +x gvm
+   mv gvm /usr/local/bin/ # 或者其他在 PATH 中的目录
+   ```
+3. 初始化环境：
+   ```bash
+   gvm init
+   source ~/.zshrc # 或 source ~/.bashrc
+   ```
+
+### 方式二：从源码构建
+
+```bash
+# 克隆仓库
+git clone https://github.com/ibreez3/gvm.git
+cd gvm
+
+# 编译
+make build
+
+# 初始化
+./gvm init
+```
+
+## 🚀 使用指南 (Usage)
+
+### 常用命令
+
+```bash
+# 初始化环境 (首次使用必选)
+gvm init
+
+# 查看帮助
+gvm --help
+
+# 列出远程可用版本 (默认显示最新 20 个稳定版)
+gvm list -r
+
+# 搜索特定版本
+gvm search 1.22
+
+# 安装指定版本
+gvm install 1.22.5
+# 或者
+gvm install go1.22.5
+
+# 查看本地已安装版本
+gvm list
+
+# 切换版本
+gvm use 1.22.5
+
+# 查看当前版本
+gvm current
+```
+
+## 📂 目录结构与原理
+
+GVM 将所有数据存储在 `$HOME/.gvm` 目录下：
+
+- **`~/.gvm/go<version>/`**: 存放具体版本的 Go SDK。
+- **`~/.gvm/goroot`**: 指向当前激活版本的软链接。
+- **`~/.gvm/.gvmrc`**: 环境变量配置文件，包含 `GOROOT`, `GOPATH`, `GOPROXY` 等设置。
+
+**Shell 集成**：
+`gvm init` 会自动在你的 `~/.zshrc` 或 `~/.bashrc` 中添加如下配置：
+
+```bash
+# gvm shell setup
+if [ -f "$HOME/.gvm/.gvmrc" ]; then
+    source "$HOME/.gvm/.gvmrc"
+fi
+```
+
+## 🛠 开发与贡献 (Development)
+
+我们欢迎任何形式的贡献！本项目遵循 Git Flow 工作流。
+
+### 分支策略
+
+- **`main`**: 稳定发布分支。仅接受来自 `develop` 的合并。
+- **`develop`**: 主开发分支。所有新功能和修复都应合并到此分支。
+
+### 开发流程
+
+1. Fork 本仓库并 Clone 到本地。
+2. 基于 `develop` 分支创建你的特性分支：`git checkout -b feature/my-feature develop`。
+3. 提交代码并推送到你的 Fork 仓库。
+4. 提交 Pull Request 到本仓库的 `develop` 分支。
+
+### 发布流程 (Release)
+
+本项目使用 GitHub Actions 和 GoReleaser 实现自动化发布。
+
+- **自动发布 (Patch)**: 当 `develop` 分支合并到 `main` 时，流水线会自动计算下一个 Patch 版本（如 `v1.0.0` -> `v1.0.1`），打 Tag 并发布 Release。
+- **手动发布 (Minor/Major)**: 在 `main` 分支下运行 `make release`，脚本会引导你选择版本类型（Patch/Minor/Major），并自动打 Tag 推送。
+
+## 📄 许可证 (License)
+
+本项目基于 MIT 许可证开源。详情请参阅 [LICENSE](LICENSE) 文件。
+
+## 🙏 致谢
+
+感谢 Go 语言团队提供的强大工具链和标准库，使得开发此类工具变得简单高效。
+数据源来自官方 [go.dev/dl](https://go.dev/dl)。
