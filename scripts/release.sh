@@ -8,6 +8,17 @@ if [[ -n $(git status --porcelain) ]]; then
     exit 1
 fi
 
+# 确保当前分支是 main
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$current_branch" != "main" ]]; then
+    echo "Error: You must be on the 'main' branch to release."
+    exit 1
+fi
+
+# 确保本地 main 是最新的
+echo "Pulling latest changes from origin/main..."
+git pull origin main
+
 # 获取最新的 tag，如果不存在则从 v0.0.0 开始
 latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
 echo "Current version: $latest_tag"

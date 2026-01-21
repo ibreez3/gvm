@@ -41,8 +41,13 @@ gvm 是一个使用 Go 编写的 Go 版本管理器，支持远程安装、版�
   - `fi`
 
 Release 工作流
+- 开发模式：
+  - 基于 `develop` 分支进行日常开发。
+  - 所有功能分支合并回 `develop`。
+  - `main` 分支仅接受来自 `develop` 的合并（受 GitHub Workflow 保护）。
 - 自动化发布：
-  - 运行 `make release`：交互式脚本辅助你选择版本类型（Patch/Minor/Major），自动打 tag 并推送到 GitHub。
+  - 合并 `develop` 到 `main` 后。
+  - 切换到 `main` 分支运行 `make release`：交互式脚本辅助你选择版本类型（Patch/Minor/Major），自动打 tag 并推送到 GitHub。
   - 推送符合 `v*` 的 tag 将自动触发构建与发布（多平台：Linux、macOS、Windows；架构：amd64、arm64）。
 - 工作流使用 Go 官方环境与 GoReleaser 构建压缩包并上传到 GitHub Release。
 - 手动触发也支持：在 GitHub Actions 中选择 `Release` 工作流，点击 `Run workflow`。
