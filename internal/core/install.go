@@ -21,9 +21,7 @@ func InstallVersion(version string) error {
 	if err != nil {
 		return err
 	}
-	if strings.HasPrefix(version, "go") {
-		version = strings.TrimPrefix(version, "go")
-	}
+	version = strings.TrimPrefix(version, "go")
 	vdir := filepath.Join(d, "go"+version)
 	if _, err := os.Stat(vdir); err == nil {
 		return fmt.Errorf("version %s already installed", version)
@@ -48,7 +46,15 @@ func InstallVersion(version string) error {
 		// URL 需手动构造，因为 fileInfo 只有文件名
 	}
 
-	downloadURL := "https://go.dev/dl/" + fileInfo.Filename
+	sourceURL, err := GetDownloadSource()
+	if err != nil {
+		return err
+	}
+	// Ensure the source URL ends with a slash
+	if !strings.HasSuffix(sourceURL, "/") {
+		sourceURL += "/"
+	}
+	downloadURL := sourceURL + fileInfo.Filename
 	tarPath := filepath.Join(d, fileInfo.Filename)
 
 	if err := os.MkdirAll(d, 0o755); err != nil {
@@ -104,7 +110,11 @@ func InstallVersion(version string) error {
 
 func getVersionInfo(version, osys, arch string) (*File, error) {
 	// 查询包含所有版本的 JSON
-	resp, err := http.Get("https://go.dev/dl/?mode=json&include=all")
+	sourceURL, err := GetDownloadSourceJSON()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := http.Get(sourceURL)
 	if err != nil {
 		return nil, err
 	}

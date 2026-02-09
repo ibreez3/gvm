@@ -1,4 +1,4 @@
-package main
+package gvm
 
 import (
 	"fmt"
@@ -20,6 +20,7 @@ var rootCmd = &cobra.Command{
 	Version: version,
 }
 
+// Execute runs the root command
 func Execute() {
 	rootCmd.SetVersionTemplate(fmt.Sprintf("gvm version %s (commit: %s, date: %s)\n", version, commit, date))
 	if err := rootCmd.Execute(); err != nil {

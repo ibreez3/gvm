@@ -8,7 +8,7 @@ before:
 
 builds:
   - id: gvm
-    main: ./cmd/gvm
+    main: .
     binary: gvm
     env:
       - CGO_ENABLED=0
@@ -21,9 +21,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
-      - -X main.date={{.Date}}
+      - -X github.com/ibreez3/gvm/cmd/gvm.version={{.Version}}
+      - -X github.com/ibreez3/gvm/cmd/gvm.commit={{.Commit}}
+      - -X github.com/ibreez3/gvm/cmd/gvm.date={{.Date}}
 
 archives:
   - formats: [ 'tar.gz' ]

@@ -17,6 +17,10 @@
 - 🔍 **智能搜索**：快速搜索可用的 Go 版本（支持模糊匹配）。
 - 🛠 **自动配置**：`gvm init` 自动检测 Shell (`zsh`/`bash`) 并注入环境变量，开箱即用。
 - 📦 **多平台支持**：支持 macOS, Linux 和 Windows (部分功能)。
+- ⚙️ **自定义源**：支持配置自定义 Go 下载源（默认从 `go.dev/dl/` 下载）。
+- 🆙 **智能升级**：`gvm upgrade` 可将指定次版本升级到最新补丁版本（如 `go1.25.x`）。
+- 🗑️ **批量卸载**：支持多种批量卸载模式（按版本范围、模式匹配、保留最新 N 个等）。
+- 🔄 **自更新**：`gvm self-update` 一键更新 gvm 到最新版本。
 
 ## 📦 安装 (Installation)
 
@@ -43,7 +47,7 @@ git clone https://github.com/ibreez3/gvm.git
 cd gvm
 
 # 编译
-make build
+go build
 
 # 初始化
 ./gvm init
@@ -51,7 +55,7 @@ make build
 
 ## 🚀 使用指南 (Usage)
 
-### 常用命令
+### 基础命令
 
 ```bash
 # 初始化环境 (首次使用必选)
@@ -60,7 +64,7 @@ gvm init
 # 查看帮助
 gvm --help
 
-# 列出远程可用版本 (默认显示最新 20 个稳定版)
+# 列出远程可用版本
 gvm list -r
 
 # 搜索特定版本
@@ -81,6 +85,76 @@ gvm use 1.22.5
 gvm current
 ```
 
+### 高级命令
+
+#### 📝 配置管理
+
+```bash
+# 查看当前配置
+gvm config --show
+
+# 设置自定义下载源
+gvm config --source "https://your-mirror.com/dl/"
+
+# 设置 JSON API 源
+gvm config --json-source "https://your-mirror.com/dl/?mode=json&include=all"
+
+# 重置为默认配置
+gvm config --reset
+```
+
+#### 🆙 版本升级
+
+```bash
+# 将 go1.25.x 升级到最新的补丁版本
+gvm upgrade 1.25
+
+# 升级后自动切换到新版本
+gvm upgrade 1.25 -u
+
+# 自动确认升级（无需交互）
+gvm upgrade 1.25 -y
+```
+
+#### 🗑️ 批量卸载
+
+```bash
+# 卸载单个版本
+gvm uninstall 1.21.0
+
+# 卸载低于某版本的所有版本
+gvm uninstall --below 1.22
+
+# 卸载匹配模式的所有版本（支持通配符）
+gvm uninstall --pattern "1.21.*"
+
+# 只保留最新的 N 个版本
+gvm uninstall --keep 2
+
+# 卸载所有版本
+gvm uninstall --all
+
+# 不保留当前正在使用的版本
+gvm uninstall --pattern "1.21.*" --keep-current=false
+```
+
+#### 🔗 外部链接
+
+```bash
+# 链接外部 Go SDK 到 gvm 管理
+gvm link /usr/local/go
+```
+
+#### 🔄 自更新
+
+```bash
+# 检查 gvm 更新（不安装）
+gvm self-update --check
+
+# 更新 gvm 到最新版本
+gvm self-update
+```
+
 ## 📂 目录结构与原理
 
 GVM 将所有数据存储在 `$HOME/.gvm` 目录下：
@@ -88,6 +162,7 @@ GVM 将所有数据存储在 `$HOME/.gvm` 目录下：
 - **`~/.gvm/go<version>/`**: 存放具体版本的 Go SDK。
 - **`~/.gvm/goroot`**: 指向当前激活版本的软链接。
 - **`~/.gvm/.gvmrc`**: 环境变量配置文件，包含 `GOROOT`, `GOPATH`, `GOPROXY` 等设置。
+- **`~/.gvm/config.json`**: GVM 配置文件（自定义下载源等）。
 
 **Shell 集成**：
 `gvm init` 会自动在你的 `~/.zshrc` 或 `~/.bashrc` 中添加如下配置：
@@ -98,6 +173,32 @@ if [ -f "$HOME/.gvm/.gvmrc" ]; then
     source "$HOME/.gvm/.gvmrc"
 fi
 ```
+
+## 📋 更新日志 (Changelog)
+
+### v0.2.0 (最新)
+
+**新增功能:**
+- ✨ 新增 `gvm config` 命令，支持自定义 Go 下载源
+- ✨ 新增 `gvm upgrade` 命令，智能升级次版本到最新补丁版本
+- ✨ 增强 `gvm uninstall` 命令，支持批量卸载（`--below`, `--pattern`, `--keep`, `--all`）
+- ✨ 新增 `gvm self-update` 命令，支持 gvm 自更新
+
+**改进:**
+- 🔧 重构项目结构，`main.go` 移至根目录，`cmd/gvm` 改为 `package gvm`
+- 🔧 优化版本比较逻辑，支持精确的版本号比较
+- 📝 完善 CLI 帮助文档和中文提示
+
+**修复:**
+- 🐛 修复 `current.go` 包名错误问题
+
+### v0.1.0
+
+- 🎉 首个正式发布
+- ✅ 支持安装、卸载、切换 Go 版本
+- ✅ 支持搜索和列出可用版本
+- ✅ 支持链接外部 Go SDK
+- ✅ 自动环境配置
 
 ## 🛠 开发与贡献 (Development)
 

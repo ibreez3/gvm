@@ -10,10 +10,12 @@ import (
 )
 
 func SearchRemote(prefix string, limit int) ([]string, error) {
-    if strings.HasPrefix(prefix, "go") {
-        prefix = strings.TrimPrefix(prefix, "go")
+    prefix = strings.TrimPrefix(prefix, "go")
+    sourceURL, err := GetDownloadSourceJSON()
+    if err != nil {
+        return nil, err
     }
-    resp, err := http.Get("https://go.dev/dl/?mode=json&include=all")
+    resp, err := http.Get(sourceURL)
     if err != nil {
         return nil, err
     }
@@ -44,9 +46,7 @@ func SearchRemote(prefix string, limit int) ([]string, error) {
 }
 
 func SearchLocal(prefix string) ([]string, error) {
-    if strings.HasPrefix(prefix, "go") {
-        prefix = strings.TrimPrefix(prefix, "go")
-    }
+    prefix = strings.TrimPrefix(prefix, "go")
     d, err := GvmDir()
     if err != nil {
         return nil, err
