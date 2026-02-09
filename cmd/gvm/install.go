@@ -1,4 +1,4 @@
-package main
+package gvm
 
 import (
 	"github.com/ibreez3/gvm/internal/core"
