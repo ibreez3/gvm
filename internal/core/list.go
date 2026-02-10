@@ -35,7 +35,7 @@ func ListRemote(n int) ([]string, error) {
     }
     defer resp.Body.Close()
     if resp.StatusCode != 200 {
-        return nil, fmt.Errorf("远程查询失败: %s", resp.Status)
+        return nil, fmt.Errorf("failed to fetch remote versions: %s", resp.Status)
     }
     var all []DLVersion
     dec := json.NewDecoder(resp.Body)

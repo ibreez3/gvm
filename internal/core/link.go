@@ -24,7 +24,7 @@ func LinkVersion(path string) error {
 	}
 
 	if info.IsDir() {
-		// 假设用户提供的是 GOROOT 路径
+		// Assume user provided GOROOT path
 		goroot = absPath
 		goBin = filepath.Join(goroot, "bin", "go")
 		if runtime.GOOS == "windows" {
@@ -34,8 +34,8 @@ func LinkVersion(path string) error {
 			return fmt.Errorf("invalid Go SDK path: %s not found inside %s", filepath.Base(goBin), goroot)
 		}
 	} else {
-		// 假设用户提供的是 go 二进制文件路径
-		// 尝试通过 go env GOROOT 获取真实路径
+		// Assume user provided go binary path
+		// Try to get real path via go env GOROOT
 		fmt.Printf("🔍 Resolving GOROOT from binary: %s\n", absPath)
 		cmd := exec.Command(absPath, "env", "GOROOT")
 		out, err := cmd.Output()
@@ -47,7 +47,7 @@ func LinkVersion(path string) error {
 		fmt.Printf("✅ Found GOROOT: %s\n", goroot)
 	}
 
-	// 2. 获取版本号
+	// 2. Get version number
 	cmd := exec.Command(goBin, "version")
 	out, err := cmd.Output()
 	if err != nil {
@@ -70,8 +70,8 @@ func LinkVersion(path string) error {
 		return err
 	}
 
-	// 3. 创建软链接
-	// 目标: ~/.gvm/go1.21.5 -> /usr/local/go (GOROOT)
+	// 3. Create symlink
+	// Target: ~/.gvm/go1.21.5 -> /usr/local/go (GOROOT)
 	linkName := filepath.Join(d, "go"+versionStr)
 
 	// Check if exists

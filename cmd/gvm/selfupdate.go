@@ -9,8 +9,8 @@ import (
 
 var selfUpdateCmd = &cobra.Command{
 	Use:   "self-update",
-	Short: "更新 gvm 到最新版本",
-	Long:  `检查并更新 gvm 到最新版本。如果当前版本已经是最新，则不会进行更新。`,
+	Short: "Update gvm to the latest version",
+	Long:  `Check and update gvm to the latest version. If already up-to-date, no action will be taken.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		checkOnly, _ := cmd.Flags().GetBool("check")
 
@@ -19,12 +19,12 @@ var selfUpdateCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			fmt.Printf("当前版本: %s\n", core.GvmVersion)
-			fmt.Printf("最新版本: %s\n", latest)
+			fmt.Printf("Current version: %s\n", core.GvmVersion)
+			fmt.Printf("Latest version: %s\n", latest)
 			if hasUpdate {
-				fmt.Println("有新版本可用!")
+				fmt.Println("A new version is available!")
 			} else {
-				fmt.Println("已经是最新版本")
+				fmt.Println("Already up-to-date")
 			}
 			return nil
 		}
@@ -34,6 +34,6 @@ var selfUpdateCmd = &cobra.Command{
 }
 
 func init() {
-	selfUpdateCmd.Flags().Bool("check", false, "仅检查是否有新版本，不进行更新")
+	selfUpdateCmd.Flags().Bool("check", false, "Only check for updates, do not install")
 	rootCmd.AddCommand(selfUpdateCmd)
 }

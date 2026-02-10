@@ -126,7 +126,7 @@ func UninstallBatch(spec *UninstallBatchSpec) ([]string, error) {
 	}
 
 	// Show what will be uninstalled
-	fmt.Printf("将卸载以下版本:\n")
+	fmt.Printf("The following versions will be uninstalled:\n")
 	for _, v := range toUninstall {
 		fmt.Printf("  - go%s\n", v)
 	}

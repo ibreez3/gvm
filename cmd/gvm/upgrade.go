@@ -14,12 +14,12 @@ var (
 
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade [version]",
-	Short: "升级 Go 次版本到最新的补丁版本",
-	Long: `升级指定次版本到最新的补丁版本。
+	Short: "Upgrade Go minor version to latest patch version",
+	Long: `Upgrade a Go minor version to the latest patch version.
 
-示例:
-  gvm upgrade 1.25    # 升级到最新的 1.25.x 版本
-  gvm upgrade go1.25  # 同上 (支持 go 前缀)`,
+Examples:
+  gvm upgrade 1.25    # Upgrade to latest 1.25.x
+  gvm upgrade go1.25  # Same as above (supports go prefix)`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		version, err := core.UpgradeVersion(args[0])
@@ -32,7 +32,7 @@ var upgradeCmd = &cobra.Command{
 			if err := core.UseVersion(version); err != nil {
 				return err
 			}
-			fmt.Printf("已切换到 go%s\n", version)
+			fmt.Printf("Switched to go%s\n", version)
 		}
 
 		return nil
@@ -40,7 +40,7 @@ var upgradeCmd = &cobra.Command{
 }
 
 func init() {
-	upgradeCmd.Flags().BoolVarP(&upgradeUse, "use", "u", false, "升级后自动切换到新版本")
-	upgradeCmd.Flags().BoolVarP(&upgradeYes, "yes", "y", false, "自动确认升级")
+	upgradeCmd.Flags().BoolVarP(&upgradeUse, "use", "u", false, "Automatically switch to new version after upgrade")
+	upgradeCmd.Flags().BoolVarP(&upgradeYes, "yes", "y", false, "Auto-confirm upgrade")
 	rootCmd.AddCommand(upgradeCmd)
 }

@@ -9,7 +9,7 @@ import (
 
 var currentCmd = &cobra.Command{
 	Use:   "current",
-	Short: "查看当前版本",
+	Short: "Show current version",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		v, err := core.CurrentVersion()
 		if err != nil {

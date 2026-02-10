@@ -24,7 +24,39 @@
 
 ## 📦 安装 (Installation)
 
-### 方式一：通过 Release 安装（推荐）
+### 方式一：curl + bash 脚本安装（推荐 ⭐️）
+
+一条命令自动安装，自动检测系统并下载对应二进制：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ibreez3/gvm/develop/install.sh | bash
+```
+
+安装完成后，运行以下命令初始化：
+
+```bash
+gvm init
+source ~/.zshrc  # 或 source ~/.bashrc
+```
+
+### 方式二：go install（已有 Go 环境）
+
+如果您已经安装了 Go，可以直接使用 `go install` 安装：
+
+```bash
+go install github.com/ibreez3/gvm@latest
+```
+
+然后运行 `gvm init` 初始化环境。
+
+### 方式三：Homebrew（macOS/Linux）
+
+```bash
+brew tap ibreez3/gvm
+brew install gvm
+```
+
+### 方式四：从 Release 手动安装
 
 1. 前往 [Releases](https://github.com/ibreez3/gvm/releases) 页面下载对应系统的压缩包。
 2. 解压并赋予执行权限：
@@ -39,7 +71,7 @@
    source ~/.zshrc # 或 source ~/.bashrc
    ```
 
-### 方式二：从源码构建
+### 方式五：从源码构建
 
 ```bash
 # 克隆仓库

@@ -17,24 +17,24 @@ var (
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "管理 gvm 配置",
-	Long: `管理 gvm 配置，包括设置 Go 下载源。
+	Short: "Manage gvm configuration",
+	Long: `Manage gvm configuration, including setting Go download source.
 
-配置文件位置: ~/.gvm/config.json
+Configuration file location: ~/.gvm/config.json
 
-可用配置项:
-  download_source      Go 版本下载源 (默认: https://go.dev/dl/)
-  download_source_json Go 版本 JSON API (默认: https://go.dev/dl/?mode=json&include=all)`,
+Available options:
+  download_source      Go version download source (default: https://go.dev/dl/)
+  download_source_json Go version JSON API (default: https://go.dev/dl/?mode=json&include=all)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return handleConfigCommand()
 	},
 }
 
 func init() {
-	configCmd.Flags().StringVar(&configSource, "source", "", "设置 Go 下载源 URL")
-	configCmd.Flags().StringVar(&configSourceJSON, "json-source", "", "设置 Go JSON API URL")
-	configCmd.Flags().BoolVar(&configShow, "show", false, "显示当前配置")
-	configCmd.Flags().BoolVar(&configReset, "reset", false, "重置为默认配置")
+	configCmd.Flags().StringVar(&configSource, "source", "", "Set Go download source URL")
+	configCmd.Flags().StringVar(&configSourceJSON, "json-source", "", "Set Go JSON API URL")
+	configCmd.Flags().BoolVar(&configShow, "show", false, "Show current configuration")
+	configCmd.Flags().BoolVar(&configReset, "reset", false, "Reset to default configuration")
 	rootCmd.AddCommand(configCmd)
 }
 
@@ -42,16 +42,16 @@ func handleConfigCommand() error {
 	// Load current config
 	cfg, err := core.LoadConfig()
 	if err != nil {
-		return fmt.Errorf("加载配置失败: %w", err)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	// Handle reset flag
 	if configReset {
 		cfg = core.DefaultConfig()
 		if err := core.SaveConfig(cfg); err != nil {
-			return fmt.Errorf("重置配置失败: %w", err)
+			return fmt.Errorf("failed to reset config: %w", err)
 		}
-		fmt.Println("配置已重置为默认值")
+		fmt.Println("Configuration reset to default")
 		printConfig(cfg)
 		return nil
 	}
@@ -68,13 +68,13 @@ func handleConfigCommand() error {
 	if configSource != "" {
 		cfg.DownloadSource = configSource
 		modified = true
-		fmt.Printf("设置 download_source = %s\n", configSource)
+		fmt.Printf("Set download_source = %s\n", configSource)
 	}
 
 	if configSourceJSON != "" {
 		cfg.DownloadSourceJSON = configSourceJSON
 		modified = true
-		fmt.Printf("设置 download_source_json = %s\n", configSourceJSON)
+		fmt.Printf("Set download_source_json = %s\n", configSourceJSON)
 	}
 
 	// If no flags were provided, show current config
@@ -85,15 +85,15 @@ func handleConfigCommand() error {
 
 	// Save the modified config
 	if err := core.SaveConfig(cfg); err != nil {
-		return fmt.Errorf("保存配置失败: %w", err)
+		return fmt.Errorf("failed to save config: %w", err)
 	}
 
-	fmt.Println("配置已保存")
+	fmt.Println("Configuration saved")
 	return nil
 }
 
 func printConfig(cfg *core.Config) {
-	fmt.Println("当前配置:")
+	fmt.Println("Current configuration:")
 	fmt.Println("================")
 	b, _ := json.MarshalIndent(cfg, "", "  ")
 	fmt.Println(string(b))

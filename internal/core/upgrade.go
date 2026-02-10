@@ -34,17 +34,17 @@ func UpgradeVersion(versionPrefix string) (string, error) {
 		return "", err
 	}
 
-	fmt.Printf("当前版本: go%s\n", currentVersion)
-	fmt.Printf("最新版本: go%s\n", latestVersion)
+	fmt.Printf("Current version: go%s\n", currentVersion)
+	fmt.Printf("Latest version: go%s\n", latestVersion)
 
 	// Check if already on latest version
 	if currentVersion == latestVersion {
-		fmt.Println("已经是最新版本!")
+		fmt.Println("Already on the latest version!")
 		return latestVersion, nil
 	}
 
 	// Confirm upgrade
-	fmt.Printf("是否升级到 go%s? (y/N): ", latestVersion)
+	fmt.Printf("Upgrade to go%s? (y/N): ", latestVersion)
 	// For non-interactive use, we'll proceed automatically
 	// In a real CLI, you might want to add a --yes flag
 

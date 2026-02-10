@@ -30,20 +30,19 @@ func InstallVersion(version string) error {
 	osys := runtime.GOOS
 	arch := runtime.GOARCH
 
-	// 1. 获取版本信息（URL 和 Checksum）
+	// 1. Get version info (URL and Checksum)
 	fmt.Printf("🔍 Searching for version %s ...\n", version)
 	fileInfo, err := getVersionInfo("go"+version, osys, arch)
 	if err != nil {
-		// Fallback: 如果 JSON 中找不到，尝试直接构造 URL（但不校验 checksum，或者给警告）
-		// 为了安全，这里我们先强制要求找到，或者打印警告
+		// Fallback: If not found in JSON, try constructing URL directly (without checksum verification)
 		fmt.Printf("⚠️  Warning: Could not find version info in official JSON API: %v\n", err)
 		fmt.Println("⚠️  Proceeding with direct download (NO CHECKSUM VERIFICATION)")
-		// 构造默认 URL
+		// Construct default URL
 		fileInfo = &File{
 			Filename: fmt.Sprintf("go%s.%s-%s.tar.gz", version, osys, arch),
 			SHA256:   "", // Empty means no verification
 		}
-		// URL 需手动构造，因为 fileInfo 只有文件名
+		// URL needs to be manually constructed since fileInfo only has filename
 	}
 
 	sourceURL, err := GetDownloadSource()
@@ -65,16 +64,16 @@ func InstallVersion(version string) error {
 	fmt.Println("🔗 Source:", downloadURL)
 	fmt.Println("📦 Dest:", tarPath)
 
-	// 2. 下载文件
+	// 2. Download file
 	if err := downloadFile(downloadURL, tarPath); err != nil {
 		return err
 	}
 
-	// 3. 校验 Checksum
+	// 3. Verify Checksum
 	if fileInfo.SHA256 != "" {
 		fmt.Println("🛡️  Verifying checksum...")
 		if err := verifyChecksum(tarPath, fileInfo.SHA256); err != nil {
-			os.Remove(tarPath) // 删除损坏的文件
+			os.Remove(tarPath) // Delete corrupted file
 			return fmt.Errorf("checksum verification failed: %v", err)
 		}
 		fmt.Println("✅ Checksum verified")
@@ -82,7 +81,7 @@ func InstallVersion(version string) error {
 		fmt.Println("⚠️  Skipping checksum verification (not available)")
 	}
 
-	// 4. 解压安装
+	// 4. Extract and install
 	fmt.Println("📦 Extracting...")
 	tdir, err := os.MkdirTemp("", "go-tgz-untar-*")
 	if err != nil {
@@ -109,7 +108,7 @@ func InstallVersion(version string) error {
 }
 
 func getVersionInfo(version, osys, arch string) (*File, error) {
-	// 查询包含所有版本的 JSON
+	// Query JSON containing all versions
 	sourceURL, err := GetDownloadSourceJSON()
 	if err != nil {
 		return nil, err
